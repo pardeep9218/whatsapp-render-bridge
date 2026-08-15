@@ -28,7 +28,7 @@ client.on('qr', (qr) => {
     console.log('\n=================== SCAN THIS CODE TO LOG IN ===================\n');
     
     // CRITICAL FOR RENDER: small must be false so the lines do not collapse in the cloud logs layout
-    qrcode.generate(qr, { small: false });
+    qrcode.generate(qr, { small: true, scale: 1, margin: 2 });
     
     console.log('\n================================================================\n');
 });
