@@ -27,15 +27,15 @@ app.get('/', (req, res) => {
 
 client.on('qr', (qr) => {
     const encodedQR = encodeURIComponent(qr);
-    // FIXED: Ensured full API route structure is cleanly used with proper backticks
-    const qrScannerUrl = `https://qrserver.com/${encodedQR}`;
+    
+    // FIXED: Using standard single quotes and a '+' sign to append the variable safely
+    const qrScannerUrl = 'https://qrserver.com' + encodedQR;
     
     console.log('\n==================================================');
     console.log('SCAN THIS LINK WITH YOUR WHATSAPP TO LOG IN:');
     console.log(qrScannerUrl);
     console.log('==================================================\n');
 });
-
 
 client.on('ready', () => {
     console.log('WhatsApp Engine is authenticated and running!');
