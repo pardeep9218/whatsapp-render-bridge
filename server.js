@@ -1,15 +1,17 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const qrcode = require('qrcode-terminal');
 const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
 app.use(bodyParser.json());
 
+// Initialize Client with performance tuning for low-RAM containers
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: '/usr/bin/google-chrome-stable', // Point strictly to the Docker-installed binary
+        executablePath: '/usr/bin/google-chrome-stable',
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -21,45 +23,47 @@ const client = new Client({
     }
 });
 
-app.get('/', (req, res) => {
-    res.send('WhatsApp Bridge is online and running successfully via Docker!');
-});
-
-const qrcode = require('qrcode-terminal');
-
+// Render Log terminal configuration
 client.on('qr', (qr) => {
-    console.log('\n=================== WHATSAPP QR CODE ===================\n');
+    console.log('\n=================== SCAN THIS CODE TO LOG IN ===================\n');
     
-    // Generate standard-sized blocks so Render logs don't warp the lines
+    // CRITICAL FOR RENDER: small must be false so the lines do not collapse in the cloud logs layout
     qrcode.generate(qr, { small: false });
     
-    console.log('\n========================================================\n');
+    console.log('\n================================================================\n');
 });
-
 
 client.on('ready', () => {
-    console.log('WhatsApp Engine is authenticated and running!');
+    console.log('Client is ready to dispatch OTP messages!');
 });
 
-app.post('/send-message', async (req, res) => {
-    const { number, message } = req.body;
-    if (!number || !message) {
-        return res.status(400).json({ error: 'Missing parameters: number or message' });
+// Dedicated HTTP Endpoint to process OTP targets from CodeIgniter
+app.post('/send-otp', async (req, res) => {
+    const { number, otp } = req.body;
+
+    if (!number || !otp) {
+        return res.status(400).json({ status: 'error', error: 'Missing parameters: number or otp' });
     }
 
     try {
+        // Strip symbols (+, -, spaces) and attach standard WhatsApp individual chat routing suffix
         const formattedNumber = number.replace(/[^\d]/g, "") + '@c.us'; 
-        await client.sendMessage(formattedNumber, message);
-        res.status(200).json({ status: 'success' });
+        
+        // Build the localized template message body text
+        const messageBody = `Your Verification Code is: ${otp}. Please do not share this code with anyone.`;
+        
+        // Dispatch via headless browser backend
+        await client.sendMessage(formattedNumber, messageBody);
+        
+        res.status(200).json({ status: 'success', message: 'OTP sent successfully.' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ status: 'error', error: error.message });
     }
 });
 
 client.initialize();
 
-// Listen dynamically using Render's environmental variables, default to 3000 for local fallback
 const port = process.env.PORT || 3000;
 app.listen(port, '0.0.0.0', () => {
-    console.log(`WhatsApp API microservice is alive on port ${port}`);
+    console.log(`OTP API server active on port ${port}`);
 });
