@@ -10,12 +10,14 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
+        // FORCE PUPPETEER TO USE THE SERVER'S GLOBAL CHROME INSTALLATION
+        executablePath: '/usr/bin/google-chrome', 
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--no-zygote',
-            '--single-process', // Crucial to prevent RAM crashes on Render's 512MB limit
+            '--single-process', // Crucial to prevent RAM crashes on Render
             '--disable-gpu'
         ]
     }
