@@ -25,17 +25,17 @@ app.get('/', (req, res) => {
     res.send('WhatsApp Bridge is online and running successfully via Docker!');
 });
 
+const qrcode = require('qrcode-terminal');
+
 client.on('qr', (qr) => {
-    const encodedQR = encodeURIComponent(qr);
+    console.log('\n=================== WHATSAPP QR CODE ===================\n');
     
-    // FIXED: Using standard single quotes and a '+' sign to append the variable safely
-    const qrScannerUrl = 'https://qrserver.com' + encodedQR;
+    // Generate standard-sized blocks so Render logs don't warp the lines
+    qrcode.generate(qr, { small: false });
     
-    console.log('\n==================================================');
-    console.log('SCAN THIS LINK WITH YOUR WHATSAPP TO LOG IN:');
-    console.log(qrScannerUrl);
-    console.log('==================================================\n');
+    console.log('\n========================================================\n');
 });
+
 
 client.on('ready', () => {
     console.log('WhatsApp Engine is authenticated and running!');
