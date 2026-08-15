@@ -36,6 +36,11 @@ client.on('ready', () => {
     console.log('WhatsApp Engine is authenticated and running!');
 });
 
+// Add a friendly home route for GET requests
+app.get('/', (req, res) => {
+    res.send('WhatsApp Bridge is online and running successfully!');
+});
+
 // Endpoint that your CodeIgniter site will communicate with via cURL
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
