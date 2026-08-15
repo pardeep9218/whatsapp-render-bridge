@@ -5,25 +5,26 @@ const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
 
-// Initialize WhatsApp Web Client with performance-tuned flags for Render's free tier
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        // FORCE PUPPETEER TO USE THE SERVER'S GLOBAL CHROME INSTALLATION
-        executablePath: '/usr/bin/google-chrome', 
+        executablePath: '/usr/bin/google-chrome-stable', // Point strictly to the Docker-installed binary
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--no-zygote',
-            '--single-process', // Crucial to prevent RAM crashes on Render
+            '--single-process', // Crucial to prevent RAM crashes on Render's 512MB limit
             '--disable-gpu'
         ]
     }
 });
 
-// Render outputs terminal logs as plain text lines. We generate a URL to scan instead of ASCII art.
+app.get('/', (req, res) => {
+    res.send('WhatsApp Bridge is online and running successfully via Docker!');
+});
+
 client.on('qr', (qr) => {
     const encodedQR = encodeURIComponent(qr);
     const qrScannerUrl = `https://qrserver.com{encodedQR}`;
@@ -38,16 +39,10 @@ client.on('ready', () => {
     console.log('WhatsApp Engine is authenticated and running!');
 });
 
-// Add a friendly home route for GET requests
-app.get('/', (req, res) => {
-    res.send('WhatsApp Bridge is online and running successfully!');
-});
-
-// Endpoint that your CodeIgniter site will communicate with via cURL
 app.post('/send-message', async (req, res) => {
     const { number, message } = req.body;
     if (!number || !message) {
-        return res.status(400).json({ error: 'Missing standard number or message targets' });
+        return res.status(400).json({ error: 'Missing parameters: number or message' });
     }
 
     try {
@@ -61,7 +56,7 @@ app.post('/send-message', async (req, res) => {
 
 client.initialize();
 
-// Listen dynamically using Render's structural system variables
+// Listen dynamically using Render's environmental variables, default to 3000 for local fallback
 const port = process.env.PORT || 3000;
 app.listen(port, '0.0.0.0', () => {
     console.log(`WhatsApp API microservice is alive on port ${port}`);
